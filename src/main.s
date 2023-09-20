@@ -301,14 +301,6 @@ replace_function_addr equ 0x11AA70
 		str     r3, [r11, #-0x10] ; store the just loaded target2 into stack -0x10
 		ldr     r3, =replacementPretendo
 		str     r3, [r11, #-0x14] ; store the just loaded (again) replacementPretendo into stack -0x14
-		ldr     r3, =target3
-		str     r3, [r11, #-0x18] ; store the just loaded target3 into stack -0x18
-		ldr     r3, =replacement3
-		str     r3, [r11, #-0x1c] ; store the just loaded replacement3 into stack -0x1c
-		ldr     r3, =target4
-		str     r3, [r11, #-0x20] ; store the just loaded target4 into stack -0x20
-		ldr     r3, =replacement4
-		str     r3, [r11, #-0x24] ; store the just loaded replacement4 into stack -0x24
 		
 		ldr     r2, [r11, #-0xc] ; load replacementPretendo into r2
 		ldr     r1, [r11, #-0x8] ; load target1 into r1
@@ -317,14 +309,6 @@ replace_function_addr equ 0x11AA70
 		ldr     r2, [r11, #-0x14] ; load replacementPretendo into r2 (again)
 		ldr     r1, [r11, #-0x10] ; load target2 into r1
 		ldr     r0, [r11, #-0x28] ; load our char* back into r0 (again)
-		bl      find_and_replace
-		ldr     r2, [r11, #-0x1c] ; load replacement3 into r2
-		ldr     r1, [r11, #-0x18] ; load target3 into r1
-		ldr     r0, [r11, #-0x28] ; load our char* back into r0 (yet again)
-		bl      find_and_replace
-		ldr     r2, [r11, #-0x24] ; load replacement4 into r2
-		ldr     r1, [r11, #-0x20] ; load target4 into r1
-		ldr     r0, [r11, #-0x28] ; load our char* back into r0 (for the last time)
 		bl      find_and_replace
 		
 		mov     r0, r0
@@ -338,24 +322,12 @@ replace_function_addr equ 0x11AA70
 	.pool
 		
 	target1:
-		.ascii "nintendowifi", 0, 0, 0, 0
+		.ascii "nintendowifi.net", 0, 0, 0, 0
 	
 	replacementPretendo:
-		.ascii "pretendo", 0, 0, 0, 0
+		.ascii "pretendo.cc", 0, 0, 0
 		
 	target2:
-		.ascii "nintendo", 0, 0, 0, 0
-		
-	target3:
-		.ascii ".net", 0, 0, 0, 0
-		
-	replacement3:
-		.ascii ".cc", 0
-		
-	target4:
-		.ascii "https", 0, 0, 0
-		
-	replacement4:
-		.ascii "http", 0, 0, 0, 0
+		.ascii "nintendo.net", 0
 
 .close
