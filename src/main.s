@@ -284,15 +284,19 @@ replace_function_addr equ 0x11AA70
 		
 	find_and_replace_lab_2: ; 0x1ade0
 		sub     sp, r11, #4
-		ldmia   sp!, {r11, lr}
+		pop     {r11, lr}
 		bx      lr
 		
 	handle_replacements: ; 0x1adec
-		stmdb   sp!, {r11, lr}
+		push    {r11, lr}
 		add     r11, sp, #4
 		sub     sp, sp, #0x28
 		str     r0, [r11, #-0x28] ; store r0 (our char* we are replacing string stuff on) into stack -0x28
+		bl      get_local_account_id ; get the local account id
+		cmp     r0, #2 ; check if r0 is 2
+		bne     handle_replacements_end ; if it isnt, skip the replacements
 		
+		; else, run the replacements
 		ldr     r3, =target1
 		str     r3, [r11, #-0x8] ; store the just loaded target1 into stack -0x8
 		ldr     r3, =replacementPretendo 
@@ -311,11 +315,34 @@ replace_function_addr equ 0x11AA70
 		ldr     r0, [r11, #-0x28] ; load our char* back into r0 (again)
 		bl      find_and_replace
 		
+	handle_replacements_end:
 		mov     r0, r0
 		mov     r0, r3
 		sub     sp, r11, #4
 		pop     {r11, lr}
 		bx      lr
+	
+	get_local_account_id:
+		push    {r11, lr}
+		
+		ldr     r0, =0x000B0000            ; load frd:u GetMyLocalAccountId
+		mrc     p15, 0x0, r1, c13, c0, 0x3 ; get our cmdbuf and store it in r1
+		str     r0, [r1, #0x80]            ; set cmdbuf[0] to our cmdhdr from r0
+		swi     0x32                       ; send the request
+		mrc     p15, 0x0, r1, c13, c0, 0x3 ; get our cmdbuf and store it in r1. again.
+		ldr     r2, [r1, #0x84]            ; load result into r2
+		cmn     r2, #0                     ; check if r2 is negative
+		bmi     get_local_account_id_clear ; if it is, go to the clear label to clear r0 and not return anything
+		ldr     r0, [r1, #0x88]            ; get our localAccountId from cmdbuf[2] to return and store it in r0
+		b       get_local_account_id_end   ; jump to the end
+		
+	get_local_account_id_clear:
+		mov     r0, #0
+		
+	get_local_account_id_end:
+		pop     {r11, lr}
+		bx      lr
+		
 		
 		
 ; strings
