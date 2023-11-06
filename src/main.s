@@ -15,25 +15,25 @@ replace_function_addr equ 0x11AA70
 		mov     r0, r5
 		b       handle_replacements
 		
-	func_1: ; 0x1aa78
+	strcmp: ; 0x1aa78
 		str     r11, [sp, #-4]!
 		add     r11, sp, #0
 		sub     sp, sp, #0xc
 		str     r0, [r11, #-8]
 		str     r1, [r11, #-0xc]
-		b       func_1_lab_3
+		b       strcmp_lab_3
 		
-	func_1_lab_1: ; 0x1aa90
+	strcmp_lab_1: ; 0x1aa90
 		ldr     r3, [r11, #-8]
 		ldrb    r2, [r3]
 		ldr     r3, [r11, #-0xc]
 		ldrb    r3, [r3]
 		cmp     r2, r3
-		beq     func_1_lab_2
+		beq     strcmp_lab_2
 		mov     r3, #0
-		b       func_1_lab_5
+		b       strcmp_lab_5
 		
-	func_1_lab_2: ; 0x1aab0
+	strcmp_lab_2: ; 0x1aab0
 		ldr     r3, [r11, #-8]
 		add     r3, r3, #1
 		str     r3, [r11, #-8]
@@ -41,17 +41,17 @@ replace_function_addr equ 0x11AA70
 		add     r3, r3, #1
 		str     r3, [r11, #-0xc]
 		
-	func_1_lab_3: ; 0x1aac8
+	strcmp_lab_3: ; 0x1aac8
 		ldr     r3, [r11, #-8]
 		ldrb    r3, [r3]
 		cmp     r3, #0
-		beq     func_1_lab_4
+		beq     strcmp_lab_4
 		ldr     r3, [r11, #-0xc]
 		ldrb    r3, [r3]
 		cmp     r3, #0
-		bne     func_1_lab_1
+		bne     strcmp_lab_1
 		
-	func_1_lab_4: ; 0x1aae8
+	strcmp_lab_4: ; 0x1aae8
 		ldr     r3, [r11, #-0xc]
 		ldrb    r3, [r3]
 		cmp     r3, #0
@@ -59,55 +59,55 @@ replace_function_addr equ 0x11AA70
 		movne   r3, #0
 		and     r3, r3, #0xff
 		
-	func_1_lab_5: ; 0x1ab00
+	strcmp_lab_5: ; 0x1ab00
 		mov     r0, r3
 		sub     sp, r11, #0
 		ldr     r11, [sp], #0x4
 		bx      lr
 		
-	func_2: ; 0x1ab10
+	strstr: ; 0x1ab10
 		push    {r11, lr}
 		add     r11, sp, #4
 		sub     sp, sp, #8
 		str     r0, [r11, #-8]
 		str     r1, [r11, #-0xc]
-		b       func_2_lab_3
+		b       strstr_lab_3
 		
-	func_2_lab_1: ; 0x1ab28
+	strstr_lab_1: ; 0x1ab28
 		ldr     r3, [r11, #-8]
 		ldrb    r2, [r3]
 		ldr     r3, [r11, #-0xc]
 		ldrb    r3, [r3]
 		cmp     r2, r3
-		bne     func_2_lab_2
+		bne     strstr_lab_2
 		ldr     r1, [r11, #-0xc]
 		ldr     r0, [r11, #-8]
-		bl      func_1
+		bl      strcmp
 		mov     r3, r0
 		cmp     r3, #0
-		beq     func_2_lab_2
+		beq     strstr_lab_2
 		ldr     r3, [r11, #-8]
-		b       func_2_lab_4
+		b       strstr_lab_4
 		
-	func_2_lab_2: ; 0x1ab60
+	strstr_lab_2: ; 0x1ab60
 		ldr     r3, [r11, #-8]
 		add     r3, r3, #1
 		str     r3, [r11, #-8]
 		
-	func_2_lab_3: ; 0x1ab6c
+	strstr_lab_3: ; 0x1ab6c
 		ldr     r3, [r11, #-8]
 		ldrb    r3, [r3]
 		cmp     r3, #0
-		bne     func_2_lab_1
+		bne     strstr_lab_1
 		mov     r3, #0
 		
-	func_2_lab_4: ; 0x1ab80
+	strstr_lab_4: ; 0x1ab80
 		mov     r0, r3
 		sub     sp, r11, #4
 		pop     {r11, lr}
 		bx      lr
 		
-	func_3: ; 0x1ab90
+	memcpy: ; 0x1ab90
 		str     r11, [sp, #-4]!
 		add     r11, sp, #0
 		sub     sp, sp, #0x24
@@ -120,9 +120,9 @@ replace_function_addr equ 0x11AA70
 		str     r3, [r11, #-0x10]
 		mov     r3, #0
 		str     r3, [r11, #-8]
-		b       func_3_lab_2
+		b       memcpy_lab_2
 		
-	func_3_lab_1: ; 0x1abc4
+	memcpy_lab_1: ; 0x1abc4
 		ldr     r3, [r11, #-8]
 		ldr     r2, [r11, #-0x10]
 		add     r3, r2, r3
@@ -135,105 +135,34 @@ replace_function_addr equ 0x11AA70
 		add     r3, r3, #1
 		str     r3, [r11, #-8]
 		
-	func_3_lab_2: ; 0x1abf0
+	memcpy_lab_2: ; 0x1abf0
 		ldr     r2, [r11, #-8]
 		ldr     r3, [r11, #-0x20]
 		cmp     r2, r3
-		blt     func_3_lab_1
+		blt     memcpy_lab_1
 		mov     r0, r0
 		sub     sp, r11, #0
 		ldr     r11, [sp], #4
 		bx      lr
 		
-	func_4: ; 0x1ac10
-		str     r11, [sp, #-4]!
-		add     r11, sp, #0
-		sub     sp, sp, #0x24
-		str     r0, [r11, #-0x18]
-		str     r1, [r11, #-0x1c]
-		str     r2, [r11, #-0x20]
-		ldr     r3, [r11, #-0x1c]
-		str     r3, [r11, #-0x10]
-		ldr     r3, [r11, #-0x18]
-		str     r3, [r11, #-0x14]
-		mov     r3, #0
-		str     r3, [r11, #-8]
-		b       func_4_lab_2
+    strlen:
+        push    {r4, lr}          ; save r4
+
+        mov     r3, #0            ; initialize the length with 0
+        b       strlen_loop       ; jump to the start of the loop
+
+    strlen_loop:
+        add     r3, r3, #1        ; increment the length by 1
+        ldrb    r4, [r0], #1      ; load the byte at r0 (string pointer) into r4 and increment r0
+        cmp     r4, #0            ; compare it with null terminator
+        bne     strlen_loop       ; if not null terminator, continue the loop
+        
+        mov     r0, r3            ; move the length to r0 (the return value)
+        pop     {r4, lr}          ; restore r4
+        bx      lr                ; return
 		
-	func_4_lab_1: ; 0x1ac44
-		ldr     r3, [r11, #-8]
-		add     r3, r3, #0x8000000
-		add     r3, r3, #0x1000
-		ldr     r2, [r11, #-8]
-		ldr     r1, [r11, #-0x10]
-		add     r2, r1, r2
-		ldrb    r2, [r2]
-		strb    r2, [r3]
-		ldr     r3, [r11, #-8]
-		add     r3, r3, #1
-		str     r3, [r11, #-8]
-		
-	func_4_lab_2: ; 0x1ac70
-		ldr     r2, [r11, #-8]
-		ldr     r3, [r11, #-0x20]
-		cmp     r2, r3
-		blt     func_4_lab_1
-		mov     r3, #0
-		str     r3, [r11, #-0xc]
-		b       func_4_lab_4
-		
-	func_4_lab_3: ; 0x1ac8c
-		ldr     r3, [r11, #-0xc]
-		ldr     r2, [r11, #-0x14]
-		add     r2, r2, r3
-		ldr     r3, [r11, #-0xc]
-		add     r3, r3, #0x8000000
-		add     r3, r3, #0x1000
-		ldrb    r3, [r3]
-		strb    r3, [r2]
-		ldr     r3, [r11, #-0xc]
-		add     r3, r3, #1
-		str     r3, [r11, #-0xc]
-		
-	func_4_lab_4: ; 0x1acb8
-		ldr     r2, [r11, #-0xc]
-		ldr     r3, [r11, #-0x20]
-		cmp     r2, r3
-		blt     func_4_lab_3
-		mov     r0, r0
-		sub     sp, r11, #0
-		ldr     r11, [sp], #4
-		bx      lr
-		
-	func_5: ; 0x1acd8
-		str     r11, [sp, #-4]!
-		add     r11, sp, #0
-		sub     sp, sp, #0x14
-		str     r0, [r11, #-0x10]
-		mov     r3, #0
-		str     r3, [r11, #-8]
-		b       func_5_lab_2
-		
-	func_5_lab_1: ; 0x1acf4
-		ldr     r3, [r11, #-8]
-		add     r3, r3, #1
-		str     r3, [r11, #-8]
-		ldr     r3, [r11, #-0x10]
-		add     r3, r3, #1
-		str     r3, [r11, #-0x10]
-		
-	func_5_lab_2: ; 0x1ad0c
-		ldr     r3, [r11, #-0x10]
-		ldrb    r3, [r3]
-		cmp     r3, #0
-		bne     func_5_lab_1
-		ldr     r3, [r11, #-8]
-		mov     r0, r3
-		sub     sp, r11, #0
-		ldr     r11, [sp], #4
-		bx      lr
-		
-	; takes a char* in r0, things to find in r1, and things to replace the found data with in r2
+	;														  (r0)					   (r1)			 (r2)
+	; returns modified char* in r0, func variables are (char* stringToReplaceOn, char* target, char* replacement)
 	find_and_replace: ; 0x1ad30
 		push    {r11, lr}
 		add     r11, sp, #4
@@ -243,24 +172,24 @@ replace_function_addr equ 0x11AA70
 		str     r2, [r11, #-0x20]
 		ldr     r1, [r11, #-0x1c]
 		ldr     r0, [r11, #-0x18]
-		bl      func_2
+		bl      strstr
 		str     r0, [r11, #-8]
 		ldr     r3, [r11, #-8]
 		cmp     r3, #0
 		beq     find_and_replace_lab_1
 		ldr     r0, [r11, #-0x1c]
-		bl      func_5
+		bl      strlen
 		mov     r3, r0
 		str     r3, [r11, #-0xc]
 		ldr     r0, [r11, #-0x20]
-		bl      func_5
+		bl      strlen
 		mov     r3, r0
 		str     r3, [r11, #-0x10]
 		ldr     r3, [r11, #-0xc]
 		ldr     r2, [r11, #-8]
 		add     r3, r2, r3
 		mov     r0, r3
-		bl      func_5
+		bl      strlen
 		mov     r3, r0
 		str     r3, [r11, #-0x14]
 		ldr     r3, [r11, #-0x10]
@@ -272,11 +201,11 @@ replace_function_addr equ 0x11AA70
 		ldr     r3, [r11, #-0x14]
 		add     r3, r3, #1
 		mov     r2, r3
-		bl      func_4
+		bl      memcpy
 		ldr     r2, [r11, #-0x10]
 		ldr     r1, [r11, #-0x20]
 		ldr     r0, [r11, #-8]
-		bl      func_3
+		bl      memcpy
 		b       find_and_replace_lab_2
 		
 	find_and_replace_lab_1: ; 0x1addc
@@ -325,11 +254,12 @@ replace_function_addr equ 0x11AA70
 	get_local_account_id:
 		push    {r11, lr}
 		
-		ldr     r0, =0x000B0000            ; load frd:u GetMyLocalAccountId
-		mrc     p15, 0x0, r1, c13, c0, 0x3 ; get our cmdbuf and store it in r1
+		mrc     p15, 0x0, r1, c13, c0, 0x3 ; get our thread local storage and store it in r1
+		ldr     r0, =0x000B0000            ; load frd:u GetMyLocalAccountId header into r0
 		str     r0, [r1, #0x80]            ; set cmdbuf[0] to our cmdhdr from r0
+		bl      get_frd_u_handle
 		swi     0x32                       ; send the request
-		mrc     p15, 0x0, r1, c13, c0, 0x3 ; get our cmdbuf and store it in r1. again.
+		mrc     p15, 0x0, r1, c13, c0, 0x3 ; get our thread local storage and store it in r1. again.
 		ldr     r2, [r1, #0x84]            ; load result into r2
 		cmn     r2, #0                     ; check if r2 is negative
 		bmi     get_local_account_id_clear ; if it is, go to the clear label to clear r0 and not return anything
@@ -343,18 +273,50 @@ replace_function_addr equ 0x11AA70
 		pop     {r11, lr}
 		bx      lr
 		
+	get_frd_u_handle:
+		push    {r1, r11, lr}
+		
+		mrc     p15, 0x0, r1, c13, c0, 0x3 ; get our thread local storage and store it in r1
+		ldr     r0, =0x00050100            ; load ipc handle request address into r0
+		str     r0, [r1, #0x80]!           ; set cmdbuf[0] to our cmdhdr from r0
+		ldr     r0, =frd_handle            ; load frdu name into r0
+		bl      strlen                     ; get length of frd_handle
+		str     r0, [r1, #0xc]             ; store frd_handle into cmdbuf[3]
+		mov     r0, #0                     ; move 0 into r0
+		str     r0, [r1, #0x10]            ; store 0 into cmdbuf[4] to make it non-blocking
+		swi     0x32
+		
+		pop     {r1, r11, lr}
+		bx      lr
+		
+		
+		
 		
 		
 ; strings
 	.pool
+	
+	srv_handle:
+		.ascii "srv:", 0
+		
+	frd_handle:
+		.ascii "frd:u", 0
 		
 	target1:
-		.ascii "nintendowifi.net", 0, 0, 0, 0
+		.ascii "nintendowifi.net", 0, 0
 	
 	replacementPretendo:
-		.ascii "pretendo.cc", 0, 0, 0
+		.ascii "pretendo.cc", 0, 0
 		
 	target2:
-		.ascii "nintendo.net", 0
+		.ascii "nintendo.net", 0, 0
+		
+; extra data
+
+; srv_handle_store:
+; .byte 0, 0, 0, 0
+
+; frd_handle_store:
+; .byte 0, 0, 0, 0
 
 .close
