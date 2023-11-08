@@ -135,9 +135,9 @@ strlen: ; 0x1ac10
 	b       strlen_loop       ; jump to the start of the loop
 
 strlen_loop: ; 0x1ac1c
-	add     r3, r3, #1        ; increment the length by 1
 	ldrb    r4, [r0], #1      ; load the byte at r0 (string pointer) into r4 and increment r0
 	cmp     r4, #0            ; compare it with null terminator
+	addne   r3, r3, #1        ; increment the length by 1
 	bne     strlen_loop       ; if not null terminator, continue the loop
 
 	mov     r0, r3            ; move the length to r0 (the return value)
