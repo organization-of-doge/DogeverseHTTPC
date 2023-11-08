@@ -2,8 +2,16 @@
 
 .open "code.bin", "build/patched_code.bin", 0x100000
 
+;                                   (r0)              (r1)
+; Result get_service_handle(Handle* handle_out, char* service_name)
+get_service_handle equ 0x10DB40
+
 replace_hook_addr equ 0x113868
 replace_function_addr equ 0x11AA70
+
+; according to ghidra these .data addresses are not used, lets hope that is right
+frd_handle equ 0x11C340
+local_account_id equ 0x11C344
 
 .org replace_hook_addr
 	replace_hook:
@@ -145,25 +153,25 @@ replace_function_addr equ 0x11AA70
 		ldr     r11, [sp], #4
 		bx      lr
 		
-    strlen:
-        push    {r4, lr}          ; save r4
+	strlen: ; 0x1ac10
+		push    {r4, lr}          ; save r4
 
-        mov     r3, #0            ; initialize the length with 0
-        b       strlen_loop       ; jump to the start of the loop
+		mov     r3, #0            ; initialize the length with 0
+		b       strlen_loop       ; jump to the start of the loop
 
-    strlen_loop:
-        add     r3, r3, #1        ; increment the length by 1
-        ldrb    r4, [r0], #1      ; load the byte at r0 (string pointer) into r4 and increment r0
-        cmp     r4, #0            ; compare it with null terminator
-        bne     strlen_loop       ; if not null terminator, continue the loop
-        
-        mov     r0, r3            ; move the length to r0 (the return value)
-        pop     {r4, lr}          ; restore r4
-        bx      lr                ; return
+	strlen_loop: ; 0x1ac1c
+		add     r3, r3, #1        ; increment the length by 1
+		ldrb    r4, [r0], #1      ; load the byte at r0 (string pointer) into r4 and increment r0
+		cmp     r4, #0            ; compare it with null terminator
+		bne     strlen_loop       ; if not null terminator, continue the loop
+
+		mov     r0, r3            ; move the length to r0 (the return value)
+		pop     {r4, lr}          ; restore r4
+		bx      lr                ; return
 		
-	;														  (r0)					   (r1)			 (r2)
+	;                                                         (r0)                     (r1)          (r2)
 	; returns modified char* in r0, func variables are (char* stringToReplaceOn, char* target, char* replacement)
-	find_and_replace: ; 0x1ad30
+	find_and_replace: ; 0x1ac38
 		push    {r11, lr}
 		add     r11, sp, #4
 		sub     sp, sp, #0x20
@@ -208,15 +216,15 @@ replace_function_addr equ 0x11AA70
 		bl      memcpy
 		b       find_and_replace_lab_2
 		
-	find_and_replace_lab_1: ; 0x1addc
+	find_and_replace_lab_1: ; 0x1ace4
 		mov     r0, r0
 		
-	find_and_replace_lab_2: ; 0x1ade0
+	find_and_replace_lab_2: ; 0x1ace8
 		sub     sp, r11, #4
 		pop     {r11, lr}
 		bx      lr
 		
-	handle_replacements: ; 0x1adec
+	handle_replacements: ; 0x1acf4
 		push    {r11, lr}
 		add     r11, sp, #4
 		sub     sp, sp, #0x28
@@ -224,7 +232,7 @@ replace_function_addr equ 0x11AA70
 		bl      get_local_account_id ; get the local account id
 		cmp     r0, #2 ; check if r0 is 2
 		bne     handle_replacements_end ; if it isnt, skip the replacements
-		
+
 		; else, run the replacements
 		ldr     r3, =target1
 		str     r3, [r11, #-0x8] ; store the just loaded target1 into stack -0x8
@@ -244,62 +252,76 @@ replace_function_addr equ 0x11AA70
 		ldr     r0, [r11, #-0x28] ; load our char* back into r0 (again)
 		bl      find_and_replace
 		
-	handle_replacements_end:
+	handle_replacements_end: ; 0x1ad50
 		mov     r0, r0
 		mov     r0, r3
 		sub     sp, r11, #4
 		pop     {r11, lr}
 		bx      lr
 	
-	get_local_account_id:
-		push    {r11, lr}
-		
-		mrc     p15, 0x0, r1, c13, c0, 0x3 ; get our thread local storage and store it in r1
-		ldr     r0, =0x000B0000            ; load frd:u GetMyLocalAccountId header into r0
-		str     r0, [r1, #0x80]            ; set cmdbuf[0] to our cmdhdr from r0
-		bl      get_frd_u_handle
+	get_local_account_id: ; 0x1ad64
+		push    {r4, r11, lr}
+
+		; we have to cache the local account id on memory
+		; or the frd sysmodule will hang when trying to perform
+		; a request due to call recursion
+		ldr     r0, =local_account_id      ; load account id address to r0
+		ldr     r0, [r0]                   ; load account id
+		cmn     r0, #0                     ; check if r0 has a value
+		bne     get_local_account_id_end   ; if it does, return it
+
+		bl      get_frd_u_handle           ; get the frd_handle
+
+		; first we use the SetClientSdkVersion command, or this wont work
+		mrc     p15, 0x0, r4, c13, c0, 0x3 ; get our thread local storage and store it in r4
+		ldr     r0, =0x00320042            ; load frd:u SetClientSdkVersion header into r0
+		str     r0, [r4, #0x80]!           ; set cmdbuf[0] to our cmdhdr from r0
+		ldr     r0, =0x70000C8             ; set sdk version, same as nimbus
+		str     r0, [r4, #0x4]             ; set cmdbuf[1] to the sdk version
+		mov     r0, 32                     ; set placeholder kernel process id
+		str     r0, [r4, #0x8]             ; set cmdbuf[2] to the placeholder process id
+		ldr     r0, =frd_handle            ; load frd_handle address to r0
+		ldr     r0, [r0]                   ; load frd_handle
 		swi     0x32                       ; send the request
-		mrc     p15, 0x0, r1, c13, c0, 0x3 ; get our thread local storage and store it in r1. again.
-		ldr     r2, [r1, #0x84]            ; load result into r2
+
+		; now, we can make the request for the local account id
+		mrc     p15, 0x0, r4, c13, c0, 0x3 ; get our thread local storage and store it in r4
+		ldr     r0, =0x000B0000            ; load frd:u GetMyLocalAccountId header into r0
+		str     r0, [r4, #0x80]!           ; set cmdbuf[0] to our cmdhdr from r0
+		ldr     r0, =frd_handle            ; load frd_handle address to r0
+		ldr     r0, [r0]                   ; load frd_handle
+		swi     0x32                       ; send the request
+		cmn     r0, #0                     ; check if r0 is negative
+		bmi     get_local_account_id_clear ; if it is, go to the clear label to clear r0 and not return anything
+		ldr     r2, [r4, #0x4]             ; load result into r2
 		cmn     r2, #0                     ; check if r2 is negative
 		bmi     get_local_account_id_clear ; if it is, go to the clear label to clear r0 and not return anything
-		ldr     r0, [r1, #0x88]            ; get our localAccountId from cmdbuf[2] to return and store it in r0
+		ldr     r0, [r4, #0x8]             ; get our localAccountId from cmdbuf[2] to return and store it in r0
+		ldr     r1, =local_account_id      ; load account id address to r1
+		str     r0, [r1]                   ; store the local account id to memory
 		b       get_local_account_id_end   ; jump to the end
 		
-	get_local_account_id_clear:
+	get_local_account_id_clear: ; 0x1ade0
 		mov     r0, #0
 		
-	get_local_account_id_end:
+	get_local_account_id_end: ; 0x1adec
+		pop     {r4, r11, lr}
+		bx      lr
+		
+	get_frd_u_handle: ; 0x1adf4
+		push    {r11, lr}
+
+		ldr     r0, =frd_handle            ; load frd_handle address to r0
+		ldr     r1, =frdu_name             ; load frdu name into r1
+		bl      get_service_handle         ; get frd_handle
+
 		pop     {r11, lr}
 		bx      lr
 		
-	get_frd_u_handle:
-		push    {r1, r11, lr}
-		
-		mrc     p15, 0x0, r1, c13, c0, 0x3 ; get our thread local storage and store it in r1
-		ldr     r0, =0x00050100            ; load ipc handle request address into r0
-		str     r0, [r1, #0x80]!           ; set cmdbuf[0] to our cmdhdr from r0
-		ldr     r0, =frd_handle            ; load frdu name into r0
-		bl      strlen                     ; get length of frd_handle
-		str     r0, [r1, #0xc]             ; store frd_handle into cmdbuf[3]
-		mov     r0, #0                     ; move 0 into r0
-		str     r0, [r1, #0x10]            ; store 0 into cmdbuf[4] to make it non-blocking
-		swi     0x32
-		
-		pop     {r1, r11, lr}
-		bx      lr
-		
-		
-		
-		
-		
 ; strings
 	.pool
-	
-	srv_handle:
-		.ascii "srv:", 0
 		
-	frd_handle:
+	frdu_name:
 		.ascii "frd:u", 0
 		
 	target1:
@@ -310,13 +332,5 @@ replace_function_addr equ 0x11AA70
 		
 	target2:
 		.ascii "nintendo.net", 0, 0
-		
-; extra data
-
-; srv_handle_store:
-; .byte 0, 0, 0, 0
-
-; frd_handle_store:
-; .byte 0, 0, 0, 0
 
 .close
