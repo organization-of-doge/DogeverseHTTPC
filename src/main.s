@@ -88,20 +88,24 @@ replace_function_addr equ 0x11AA70
 		; else, run the replacements
 		ldr     r3, =target1
 		str     r3, [r11, #-0x8] ; store the just loaded target1 into stack -0x8
-		ldr     r3, =replacementPretendo 
-		str     r3, [r11, #-0xc] ; store the just loaded replacementPretendo into stack -0xc
 		ldr     r3, =target2
-		str     r3, [r11, #-0x10] ; store the just loaded target2 into stack -0x10
-		ldr     r3, =replacementPretendo
-		str     r3, [r11, #-0x14] ; store the just loaded (again) replacementPretendo into stack -0x14
+		str     r3, [r11, #-0xc] ; store the just loaded target2 into stack -0xc
+		ldr     r3, =target3
+		str     r3, [r11, #-0x10] ; store the just loaded target3 into stack -0x10
+		ldr     r3, =replacementPretendo 
+		str     r3, [r11, #-0x14] ; store the just loaded replacementPretendo into stack -0x14
 		
-		ldr     r2, [r11, #-0xc] ; load replacementPretendo into r2
+		ldr     r2, [r11, #-0x14] ; load replacementPretendo into r2
 		ldr     r1, [r11, #-0x8] ; load target1 into r1
 		ldr     r0, [r11, #-0x28] ; load our char* back into r0
 		bl      find_and_replace
-		ldr     r2, [r11, #-0x14] ; load replacementPretendo into r2 (again)
-		ldr     r1, [r11, #-0x10] ; load target2 into r1
-		ldr     r0, [r11, #-0x28] ; load our char* back into r0 (again)
+		ldr     r2, [r11, #-0x14] ; load replacementPretendo into r2
+		ldr     r1, [r11, #-0xc] ; load target2 into r1
+		ldr     r0, [r11, #-0x28] ; load our char* back into r0
+		bl      find_and_replace
+		ldr     r2, [r11, #-0x14] ; load replacementPretendo into r2
+		ldr     r1, [r11, #-0x10] ; load target3 into r1
+		ldr     r0, [r11, #-0x28] ; load our char* back into r0
 		bl      find_and_replace
 		
 	handle_replacements_end: ; 0x1ad50
@@ -117,15 +121,18 @@ replace_function_addr equ 0x11AA70
 	.pool
 		
 	frdu_name:
-		.ascii "frd:u", 0
+		.asciiz "frd:u"
 		
 	target1:
-		.ascii "nintendowifi.net", 0, 0
+		.asciiz "nintendowifi.net"
+	
+	target2:
+		.asciiz "nintendo.net"
+	
+	target3:
+		.asciiz "pokemon-gl.com"
 	
 	replacementPretendo:
-		.ascii "pretendo.cc", 0, 0
-		
-	target2:
-		.ascii "nintendo.net", 0, 0
+		.asciiz "pretendo.cc"
 
 .close
