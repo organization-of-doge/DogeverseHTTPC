@@ -1,4 +1,4 @@
-; rverse patch code version 2
+; aquamarine patch code version 2
 
 
 .3ds
@@ -86,7 +86,7 @@ replace_function_addr equ 0x11AA70
 		str     r0, [r11, #-0x28] ; store r0 (our char* we are replacing string stuff on) into stack -0x28
 		bl      get_local_account_id ; get the local account id
 		cmp     r0, #2 ; check if r0 is 2
-		bne     handle_replacements_rverse ; if it isnt, skip to the rverse replacements
+		bne     handle_replacements_aquamarine ; if it isnt, skip to the aquamarine replacements
 
 		; else, run the pretendo replacements
 		ldr     r3, =target1
@@ -111,9 +111,9 @@ replace_function_addr equ 0x11AA70
 		ldr     r0, [r11, #-0x28] ; load our char* back into r0
 		bl      find_and_replace
 		
-		b		handle_replacements_end ; skip the rverse patches and finish up
+		b		handle_replacements_end ; skip the aquamarine patches and finish up
 		
-	handle_replacements_rverse:
+	handle_replacements_aquamarine:
 		ldr     r3, =targetAquamarine
 		str     r3, [r11, #-0x8] ; store the just loaded targetAquamarine into stack -0x8
 		ldr     r3, =replacementAquamarine 
