@@ -1,3 +1,6 @@
+; rverse patch code version 2
+
+
 .3ds
 
 .open "code.bin", "build/patched_code.bin", 0x100000
@@ -83,9 +86,9 @@ replace_function_addr equ 0x11AA70
 		str     r0, [r11, #-0x28] ; store r0 (our char* we are replacing string stuff on) into stack -0x28
 		bl      get_local_account_id ; get the local account id
 		cmp     r0, #2 ; check if r0 is 2
-		bne     handle_replacements_end ; if it isnt, skip the replacements
+		bne     handle_replacements_rverse ; if it isnt, skip to the rverse replacements
 
-		; else, run the replacements
+		; else, run the pretendo replacements
 		ldr     r3, =target1
 		str     r3, [r11, #-0x8] ; store the just loaded target1 into stack -0x8
 		ldr     r3, =target2
@@ -108,13 +111,26 @@ replace_function_addr equ 0x11AA70
 		ldr     r0, [r11, #-0x28] ; load our char* back into r0
 		bl      find_and_replace
 		
-	handle_replacements_end: ; 0x1ad50
+		b		handle_replacements_end ; skip the rverse patches and finish up
+		
+	handle_replacements_rverse:
+		ldr     r3, =targetAquamarine
+		str     r3, [r11, #-0x8] ; store the just loaded targetAquamarine into stack -0x8
+		ldr     r3, =replacementAquamarine 
+		str     r3, [r11, #-0xc] ; store the just loaded replacementAquamarine into stack -0xc
+		
+		ldr     r2, [r11, #-0xc] ; load replacementAquamarine into r2
+		ldr     r1, [r11, #-0x8] ; load targetAquamarine into r1
+		ldr     r0, [r11, #-0x28] ; load our char* back into r0
+		bl      find_and_replace
+		
+	handle_replacements_end:
 		mov     r0, r0
 		mov     r0, r3
 		sub     sp, r11, #4
 		pop     {r11, lr}
 		bx      lr
-	
+		
 	.include "src/frdu.s"
 
 ; strings
@@ -135,4 +151,10 @@ replace_function_addr equ 0x11AA70
 	replacementPretendo:
 		.asciiz "pretendo.cc"
 
+	targetAquamarine:
+		.asciiz "discovery.olv.nintendo.net"
+	
+	replacementAquamarine:
+		.asciiz "disc.olv.nonamegiven.xyz"
+		
 .close
